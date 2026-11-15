@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef1f6">
+<title>K-Map Solver: SOP &amp; POS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&amp;display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--f:Arimo,Arial,"Liberation Sans",Helvetica,sans-serif;color-scheme:light;--bg:#eef1f6;--card:#fff;--ink:#0f172a;--mut:#4f5b74;--line:#c3cad8;--grid:#6f7b94;--acc:#8a6414;--bad:#c0392b}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#050506;--card:#0e0f12;--ink:#f2efe8;--mut:#9a9da6;--line:#2a2d34;--grid:#4a4e58;--acc:#d6b36a;--bad:#ff7b6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 500px at 50% -10%,color-mix(in srgb,var(--acc) 12%,transparent),transparent),var(--bg);color:var(--ink);font:400 16px/1.5 var(--f);min-height:100vh}
+button,input{font:inherit;color:inherit}
+main{max-width:1080px;margin:0 auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px}
+h1{font-size:1.3rem;font-weight:700;margin:0}
+h2{font-size:1rem;font-weight:700;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.hd2{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+button{background:var(--card);border:1px solid var(--grid);border-radius:9px;padding:8px 14px;min-height:40px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button.on{background:var(--acc);border-color:var(--acc);color:var(--card);font-weight:700}
+button.p.s{background:var(--card);color:var(--acc);border-color:var(--acc)}
+button.p{background:var(--acc);border-color:var(--acc);color:var(--card);font-weight:700;margin-top:14px;min-width:150px}
+.seg,.ways{display:inline-flex;gap:6px;align-items:center;color:var(--mut);font-size:.9rem}
+.seg button,.ways button{width:40px;padding:0}
+.q{font-size:1.5rem;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.q input{background:transparent;border:0;border-bottom:2px solid var(--grid);border-radius:0;text-align:center;padding:2px 0;font-weight:700}
+.q .v{width:2ch}.q .v::placeholder{color:var(--mut);opacity:.45;font-weight:400}.grp{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}.q #terms,.q #dterms{flex:1;min-width:11ch;text-align:left;padding:2px 6px}
+#sig{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:2px 14px;border-color:var(--acc);color:var(--acc);font-size:1.7rem;line-height:1.1}
+#sig small{font-size:.62rem;font-weight:400;color:var(--mut);line-height:1}
+.acts{display:flex;flex-wrap:wrap;gap:10px}
+.hint{color:var(--mut);font-size:.85rem;margin-top:8px;min-height:1.3em}.hint.warn{color:var(--bad);font-weight:700}
+.km{display:grid;grid-template-columns:auto auto;width:max-content;max-width:100%;margin:0 auto;--cs:min(72px,17vw)}
+.corner{font-size:.8rem;color:var(--mut);display:flex;align-items:flex-end;justify-content:flex-end;padding:0 8px 4px 0;min-height:46px}
+.ch{display:grid;grid-template-columns:repeat(var(--C),var(--cs))}
+.rh{display:grid;grid-template-rows:repeat(var(--R),var(--cs))}
+.hd{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;line-height:1.25;padding:0 6px;white-space:nowrap}
+.hd b{color:var(--mut);font-size:.72rem}
+.cells{position:relative;display:grid;grid-template-columns:repeat(var(--C),var(--cs));grid-template-rows:repeat(var(--R),var(--cs));outline:2px solid var(--grid)}
+.c{border:1px solid var(--grid);position:relative;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--mut);background:var(--card)}
+.c.t{color:var(--ink);background:color-mix(in srgb,var(--acc) 14%,var(--card))}
+.c i{position:absolute;right:4px;bottom:1px;font-style:normal;font-size:.62rem;font-weight:400;color:var(--mut)}
+.ov{position:absolute;pointer-events:none;z-index:2;border-style:solid;border-width:3px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid var(--line);min-height:56px}
+#fold:disabled{opacity:.35;cursor:default}
+#fold.glow{border-color:var(--acc);color:var(--acc);font-weight:700;animation:gl 1.8s ease-in-out infinite}
+@keyframes gl{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 16px 3px color-mix(in srgb,var(--acc) 55%,transparent)}}
+@media (prefers-reduced-motion:reduce){#fold.glow{animation:none;box-shadow:0 0 12px color-mix(in srgb,var(--acc) 55%,transparent)}}
+.lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.lg span{border:1px solid var(--grid);border-radius:9px;padding:5px 11px;font-weight:700}
+.lg u{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.eq{font-size:1.6rem;font-weight:700;word-break:break-word}
+.top{margin-bottom:16px}.top .card{margin-bottom:0}.top #ans{margin-top:16px}
+@media (min-width:900px){.top.two{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start}.top.two #ans{margin-top:0}}
+.cc{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:start}
+@media (max-width:760px){.cc{grid-template-columns:minmax(0,1fr)}}
+.circ{overflow-x:auto;padding:4px 0}
+.circ svg{display:block;width:100%;height:auto;overflow:visible}
+.nogate{color:var(--mut);padding:8px 0}
+.ttw h3{font-size:.85rem;font-weight:700;color:var(--mut);margin:0 0 6px}
+.tt{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.92rem;margin:0 auto}
+.tt th,.tt td{padding:3px 11px;text-align:center;border-bottom:1px solid var(--line);line-height:1.35}
+.tt th{border-bottom:2px solid var(--grid);font-weight:700}
+.tt td.m{color:var(--mut);font-size:.72rem}
+.tt .fc{border-left:2px solid var(--grid);font-weight:700}
+.tt tr.one td{background:color-mix(in srgb,var(--acc) 16%,var(--card))}
+.tt tr.one td.fc{color:var(--acc)}
+.c.d{color:var(--acc);background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--acc) 12%,transparent) 6px 12px),var(--card)}
+.cap{color:var(--mut);font-size:.85rem;margin-top:8px}
+.tt tr.dx td{color:var(--mut)}.tt tr.dx td.fc{color:var(--acc)}
+.acts button.p{flex:0 1 auto}
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+button{-webkit-tap-highlight-color:transparent}
+@media (pointer:coarse){button{min-height:44px}.seg button{height:44px}}
+@media (max-width:600px){
+ main{padding:10px max(10px,env(safe-area-inset-right)) 10px max(10px,env(safe-area-inset-left))}
+ .card{padding:12px;border-radius:12px;margin-bottom:12px}
+ .top{margin-bottom:12px}.top #ans{margin-top:12px}
+ .q{font-size:1.25rem;gap:4px}.grp{flex:1 1 100%}
+ #sig{padding:2px 10px;font-size:1.5rem}
+ .acts{gap:8px}.acts button.p{flex:1 1 calc(50% - 8px);min-width:0;padding:8px 10px}.acts #go{flex-basis:100%}
+ .km{--cs:min(72px,calc((100vw - 140px)/var(--C)))}
+ .hd{padding:0 4px;font-size:.74rem}.c{font-size:1.15rem}
+ .eq{font-size:1.3rem}
+ .tools{gap:8px}
+}
+footer{text-align:center;color:var(--mut);font-size:.85rem;padding:8px 0 20px}
+</style></head><body><main>
+<header><h1>K-Map Solver</h1><button id="theme" aria-label="Toggle dark mode">🌙</button></header>
+<section class="card"><div class="hd2"><h2>Question</h2><div class="seg" id="seg"></div></div>
+ <div class="q" id="q"></div>
+ <div class="hint" id="hint">Tap Σ / Π to switch SOP / POS. Clear a variable box to use fewer variables. With 4 variables, a leading 1 waits for the next digit (1 → 13); press comma or space to keep just 1.</div>
+ <div class="acts"><button class="p" id="go">Show answer</button><button class="p s" id="rnd" title="Load a random example">🎲 Random example</button><button class="p s" id="dc" aria-pressed="false" title="Turn don't care (X) terms on or off">X Don't care: Off</button></div>
+ <div class="hint" id="dcinfo" hidden>Don't care (X): an input combination that never happens, or whose output doesn't matter. The solver may treat each X as 1 (in SOP) or 0 (in POS), whichever makes bigger groups. Switch the toggle off to ignore them.</div></section>
+<div class="top" id="top">
+<section class="card"><div class="hd2"><h2>Karnaugh map</h2></div><div class="km" id="km"></div><div class="tools" id="tools"></div></section>
+<section class="card" id="ans" hidden></section>
+</div>
+<section class="card" id="cir" hidden></section>
+<footer>Created by Shibil P A</footer>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+let S={n:4,slots:['A','B','C','D'],vars:['A','B','C','D'],pos:false,order:[5,7,13,15],terms:[5,7,13,15],dcOn:false,dorder:[],dc:[],shown:false,sols:[],idx:0,res:{}};
+const gray=k=>k==1?[0,1]:[0,1,3,2];
+const geo=()=>{const rb=S.n>>1,cb=S.n-rb;return{rb,cb,R:1<<rb,C:1<<cb,gR:gray(rb),gC:gray(cb)}};
+const lit=(i,neg)=>S.vars[i]+(neg?'′':'');
+const dcs=()=>new Set(S.dcOn?S.dc:[]);
+const hue=i=>[172,18,265,45,330,205,95,0][i%8];
+
+/* ---------- solver ---------- */
+function solve(){
+ const N=1<<S.n,T=new Set(S.terms),A=new Set([...T,...dcs()]);   /* A = cells a group may cover (terms + don't cares) */
+ if(!T.size)return{c:S.pos?'1':'0'};
+ if(A.size==N)return{c:S.pos?'0':'1'};
+ const imps=[],pc=v=>{let c=0;while(v){c+=v&1;v>>=1}return c};
+ for(let m=0;m<N;m++)for(let v=0;v<N;v++){if(v&~m)continue;let cells=0,ok=true;
+  for(let x=0;x<N;x++)if((x&m)==v){if(!A.has(x)){ok=false;break}cells|=1<<x}
+  if(ok)imps.push({m,v,cells})}
+ const pis=imps.filter(a=>!imps.some(o=>o!==a&&(o.cells&a.cells)==a.cells&&o.cells!=a.cells));
+ let target=0;T.forEach(x=>target|=1<<x);
+ const cost=ch=>ch.length*100+ch.reduce((a,g)=>a+pc(g.m),0);
+ let best=1e9,sols=[],seen=new Set();
+ (function dfs(ch,cov){
+  const c=cost(ch);
+  if((target&~cov)==0){if(c<best){best=c;sols=[];seen.clear()}
+   const k=ch.map(g=>g.m*100+g.v).sort().join();if(c==best&&!seen.has(k)){seen.add(k);sols.push(ch.slice())}return}
+  if(c>=best)return;
+  let x=0;while(!((target&~cov)>>x&1))x++;
+  pis.filter(p=>p.cells>>x&1).forEach(p=>{ch.push(p);dfs(ch,cov|p.cells);ch.pop()})
+ })([],0);
+ return{sols:sols.slice(0,8).map(s=>s.map(decorate))}
+}
+function decorate(g){
+ g.lits=[];for(let i=0;i<S.n;i++){const b=S.n-1-i;if(g.m>>b&1){const bit=g.v>>b&1;g.lits.push({i,neg:S.pos?!!bit:!bit})}}
+ const txt=g.lits.map(l=>lit(l.i,l.neg));
+ g.str=S.pos?(txt.length>1?'('+txt.join(' + ')+')':txt[0]):txt.join('');
+ const {cb,R,C,gR,gC}=geo(),rs=[],cs=[];g.list=[];
+ for(let x=0;x<1<<S.n;x++)if(g.cells>>x&1){g.list.push(x);rs.push(gR.indexOf(x>>cb));cs.push(gC.indexOf(x&(C-1)))}
+ g.rr=runs(rs,R);g.cc=runs(cs,C);g.wrap=g.rr.length>1||g.cc.length>1;return g}
+function runs(p,L){
+ p=[...new Set(p)].sort((a,b)=>a-b);if(p.length==L)return[[0,L-1,0,0]];
+ const r=[];let s=p[0],e=p[0];
+ for(let i=1;i<p.length;i++){if(p[i]==e+1)e=p[i];else{r.push([s,e,0,0]);s=e=p[i]}}
+ r.push([s,e,0,0]);if(r.length>1){r[0][2]=1;r[r.length-1][3]=1}return r}
+
+/* ---------- question ---------- */
+const HINT=$('#hint').textContent;let hintTimer;
+function note(m,bad){const h=$('#hint');h.textContent=m;h.classList.toggle('warn',!!bad);clearTimeout(hintTimer);
+ hintTimer=setTimeout(()=>{h.textContent=HINT;h.classList.remove('warn')},2800)}
+function derive(){S.terms=[...new Set(S.order)].sort((a,b)=>a-b);const T=new Set(S.terms);S.dc=[...new Set(S.dorder)].filter(x=>!T.has(x)).sort((a,b)=>a-b)}
+function syncTerms(){ /* drop terms that no longer fit the variable count and refresh the text boxes */
+ const max=(1<<S.n)-1;S.order=[...new Set(S.order)].filter(x=>x<=max);S.dorder=[...new Set(S.dorder)].filter(x=>x<=max&&!S.order.includes(x));derive();
+ ['terms','dterms'].forEach(id=>{const t=$('#'+id);if(t&&t.sync)t.sync()})}
+function updateVars(){ /* number of variables = number of filled variable boxes */
+ const vs=S.slots.filter(Boolean);
+ if(vs.length<2){note('Keep at least 2 variables',true);return false}
+ const changed=vs.length!=S.n;S.vars=vs;S.n=vs.length;S.shown=false;
+ if(changed)syncTerms();
+ refresh();return true}
+function buildQ(){
+ const q=$('#q');q.innerHTML='<span>F(</span>';
+ S.slots.forEach((v,i)=>{const e=document.createElement('input');e.className='v';e.maxLength=1;e.value=v;e.placeholder='+';e.autocomplete='off';e.spellcheck=false;
+  e.setAttribute('aria-label','Variable '+(i+1)+(v?'':' (empty)'));
+  e.onfocus=()=>e.select();
+  e.oninput=()=>{
+   const val=e.value.toUpperCase().replace(/[^A-Z]/g,'');
+   if(val&&S.slots.some((x,j)=>j!=i&&x==val)){e.value=S.slots[i];note('Each variable needs its own letter',true);return}
+   e.value=val;S.slots[i]=val;
+   if(!updateVars())return;
+   if(val){const nx=q.querySelectorAll('.v')[i+1]||$('#terms');nx&&nx.focus()}};
+  q.append(e);if(i<S.slots.length-1)q.append(',')});
+ q.append(') =');
+ const b=document.createElement('button');b.id='sig';b.title='Tap to switch between Σ (SOP) and Π (POS)';b.innerHTML='<span id="sg"></span><small id="sk"></small>';
+ b.onclick=()=>{S.pos=!S.pos;S.shown=false;refresh()};q.append(b);
+ const mkBox=(id,key,label)=>{
+ const t=document.createElement('input');t.id=id;t.className='tb';t.inputMode='numeric';t.autocomplete='off';t.setAttribute('aria-label',label);
+ const fmt=a=>a.length?a.join(', ')+', ':'';
+ t.value=fmt(S[key]);let prev=t.value;
+ t.sync=()=>{t.value=prev=fmt(S[key])};
+ /* Typing rules: a number that cannot grow into a 2-digit term gets its comma at once.
+    A leading 1 on a 4-variable map (could become 10..15) waits for the next digit:
+    type 3 to make 13, or type a comma / space / Enter (or leave the box) to keep it as 1. */
+ const apply=(raw,del,force)=>{
+  const max=(1<<S.n)-1,toks=[];
+  (raw.match(/\d+/g)||[]).forEach(ds=>{let i=0;while(i<ds.length){let c=ds[i++];while(i<ds.length&&c!='0'&&+(c+ds[i])<=max)c+=ds[i++];toks.push(+c)}});
+  const ok=toks.filter(x=>x<=max);
+  if(ok.length<toks.length)note(`With ${S.n} variables, terms go from 0 to ${max}`,true);
+  const last=toks[toks.length-1];
+  const pend=(!del&&!force&&/\d$/.test(raw)&&ok.length==toks.length&&last>0&&last<10&&last*10<=max)?last:null;
+  const list=[...new Set(pend!==null?ok.slice(0,-1):ok)];
+  let txt=list.join(', ');
+  if(pend!==null)txt+=(list.length?', ':'')+pend;else if(list.length)txt+=', ';
+  t.value=prev=txt;
+  S[key]=pend!==null?[...list,pend]:list;
+  /* a number lives in only one box: terms or don't cares */
+  const ok2=key=='order'?'dorder':'order',mine=new Set(list);
+  if(S[ok2].some(x=>mine.has(x))){S[ok2]=S[ok2].filter(x=>!mine.has(x));const o=$('#'+(id=='terms'?'dterms':'terms'));if(o&&o.sync)o.sync()}
+  derive();S.shown=false;refresh()};
+ t.oninput=e=>{
+  const del=(e.inputType||'').startsWith('delete');
+  let raw=t.value;
+  if(del&&/\d\D+$/.test(prev)&&prev.startsWith(raw))raw=prev.replace(/\d+\D*$/,'');
+  apply(raw,del,false)};
+ t.onkeydown=e=>{if(e.key=='Enter'&&/\d$/.test(t.value)){e.preventDefault();apply(t.value,false,true)}};
+ t.onblur=()=>{if(/\d$/.test(t.value))apply(t.value,false,true)};
+ t.onfocus=()=>setTimeout(()=>{const n=t.value.length;try{t.setSelectionRange(n,n)}catch(e){}});
+ return t};
+ const t=mkBox('terms','order','Term numbers');
+ const g1=document.createElement('span');g1.className='grp';g1.append('(',t,')');q.append(g1);
+ if(S.dcOn){const g2=document.createElement('span');g2.className='grp';g2.append('+ d(',mkBox('dterms','dorder',"Don't care term numbers"),')');q.append(g2)}
+ $('#dcinfo').hidden=!S.dcOn;$('#dc').classList.toggle('on',S.dcOn);$('#dc').setAttribute('aria-pressed',S.dcOn);$('#dc').textContent="X Don't care: "+(S.dcOn?'On':'Off');
+ refresh()}
+
+/* ---------- render ---------- */
+function refresh(){
+ $('#sg').textContent=S.pos?'Π':'Σ';$('#sk').textContent=(S.pos?'POS':'SOP')+' ⇄';
+ document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',+b.dataset.n==S.n));
+ $('#go').textContent=S.shown?'Hide answer':'Show answer';
+ if(S.shown){S.res=solve();S.sols=S.res.sols||[];if(S.idx>=S.sols.length)S.idx=0}
+ $('#top').classList.toggle('two',S.shown);renderMap();renderTools();renderAns()}
+function renderMap(){
+ const {rb,cb,R,C,gR,gC}=geo(),km=$('#km');km.style.setProperty('--R',R);km.style.setProperty('--C',C);
+ const lab=(bits,cnt,off)=>{const a=[];let b='';for(let k=0;k<cnt;k++){const bit=bits>>(cnt-1-k)&1;b+=bit;a.push(lit(off+k,S.pos?!!bit:!bit))}
+  return`<div class="hd"><b>${b}</b>${a.join(S.pos?' + ':'')}</div>`};
+ let h=`<div class="corner">${S.vars.slice(0,rb).join('')} \\ ${S.vars.slice(rb).join('')}</div><div class="ch">${gC.map(g=>lab(g,cb,rb)).join('')}</div><div class="rh">${gR.map(g=>lab(g,rb,0)).join('')}</div><div class="cells" id="cells">`;
+ const T=new Set(S.terms),D=dcs();
+ for(let r=0;r<R;r++)for(let c=0;c<C;c++){const x=gR[r]<<cb|gC[c],inT=T.has(x),inD=D.has(x);
+  h+=`<div class="c${inT?' t':''}${inD?' d':''}">${inD?'X':inT?(S.pos?0:1):(S.pos?1:0)}<i>${x}</i></div>`}
+ if(S.shown&&S.sols.length)S.sols[S.idx].forEach((g,gi)=>{
+  const col=hue(gi),d=5+gi*4;
+  g.rr.forEach(r=>g.cc.forEach(c=>{
+   const L=c[2]?0:d,Rr=c[3]?0:d,Tp=r[2]?0:d,B=r[3]?0:d,rad=(a,b)=>(a||b)?0:10;
+   h+=`<div class="ov" data-ox="${c[3]}" data-oy="${r[3]}" style="left:calc(${c[0]}/${C}*100% + ${L}px);top:calc(${r[0]}/${R}*100% + ${Tp}px);width:calc(${c[1]-c[0]+1}/${C}*100% - ${L+Rr}px);height:calc(${r[1]-r[0]+1}/${R}*100% - ${Tp+B}px);border-color:hsl(${col} 75% 45%);background:hsl(${col} 75% 50% / .2);border-left-width:${c[2]?0:3}px;border-right-width:${c[3]?0:3}px;border-top-width:${r[2]?0:3}px;border-bottom-width:${r[3]?0:3}px;border-radius:${rad(c[2],r[2])}px ${rad(c[3],r[2])}px ${rad(c[3],r[3])}px ${rad(c[2],r[3])}px"></div>`}))});
+ km.innerHTML=h+'</div>'}
+function renderTools(){
+ const has=S.shown&&S.sols.length>0,wrap=has&&S.sols[S.idx].some(g=>g.wrap);
+ $('#tools').innerHTML=`<div class="ways">${has?`<span>Ways to group</span>`+S.sols.map((s,i)=>`<button data-i="${i}" class="${i==S.idx?'on':''}" aria-label="Grouping ${i+1}">${i+1}</button>`).join(''):''}</div><button id="fold" class="${wrap?'glow':''}" ${wrap?'':'disabled'} title="Fold the map to see wrap-around groups">▶ Fold</button>`;
+ document.querySelectorAll('.ways [data-i]').forEach(b=>b.onclick=()=>{S.idx=+b.dataset.i;refresh()});
+ if(wrap)$('#fold').onclick=fold}
+function usedX(sol){
+ const D=dcs();if(!D.size)return'';
+ const u=[...new Set(sol.flatMap(g=>g.list))].filter(x=>D.has(x)).sort((a,b)=>a-b);
+ return`<div class="cap">${u.length?`Don't cares used as ${S.pos?0:1}: ${u.join(', ')}`:"No don't cares were needed in these groups."}</div>`}
+function ttable(){
+ const n=S.n,N=1<<n,T=new Set(S.terms),D=dcs();
+ let h=`<div class="ttw"><h3>Truth table</h3><table class="tt"><thead><tr><th>#</th>${S.vars.map(v=>`<th>${v}</th>`).join('')}<th class="fc">F</th></tr></thead><tbody>`;
+ for(let x=0;x<N;x++){const dx=D.has(x),f=dx?'X':S.pos?(T.has(x)?0:1):(T.has(x)?1:0);
+  h+=`<tr class="${f===1?'one':dx?'dx':''}"><td class="m">${x}</td>${S.vars.map((v,k)=>`<td>${x>>(n-1-k)&1}</td>`).join('')}<td class="fc">${f}</td></tr>`}
+ return h+'</tbody></table>'+(D.size?'<div class="cap">X = don\'t care</div>':'')+'</div>'}
+function renderAns(){
+ const a=$('#ans'),c=$('#cir');a.hidden=c.hidden=!S.shown;if(!S.shown)return;
+ if(S.res.c!==undefined){
+  a.innerHTML=`<div class="hd2"><h2>Answer</h2></div><div class="eq">F = ${S.res.c}</div>`;
+  c.innerHTML=`<div class="hd2"><h2>Circuit &amp; truth table</h2></div><div class="cc"><div class="nogate">The output is always ${S.res.c}, so no gates are needed: F is simply tied to ${S.res.c}.</div>${ttable()}</div>`;return}
+ const sol=S.sols[S.idx];
+ a.innerHTML=`<div class="hd2"><h2>Answer</h2></div><div class="lg">${sol.map((g,i)=>`<span><u style="background:hsl(${hue(i)} 75% 48%)"></u>${g.str}</span>`).join('')}</div><div class="eq">F = ${sol.map(g=>g.str).join(S.pos?'':' + ')}</div>${usedX(sol)}`;
+ if(sol.length==1&&sol[0].lits.length==1&&!sol[0].lits[0].neg){ /* F is just one input wire: nothing to draw */
+  c.innerHTML=`<div class="hd2"><h2>Circuit &amp; truth table</h2></div><div class="cc"><div class="nogate">F = ${sol[0].str}: the output is simply the input ${sol[0].str} passed straight through, so no gates are needed and there is no circuit to draw.</div>${ttable()}</div>`;return}
+ c.innerHTML=`<div class="hd2"><h2>Circuit &amp; truth table</h2></div><div class="cc"><div class="circ">${circuit(sol)}</div>${ttable()}</div>`;
+ const cw=c.querySelector('.circ');if(cw&&cw.scrollWidth>cw.clientWidth+2){const n=document.createElement('div');n.className='cap';n.textContent='Swipe sideways to see the whole circuit →';cw.append(n)}}
+function fold(){
+ const c=$('#cells'),W=c.offsetWidth,H=c.offsetHeight;
+ c.querySelectorAll('.ov').forEach(p=>{if(p.dataset.ox!=1&&p.dataset.oy!=1)return;const t=`translate(${-W*p.dataset.ox}px,${-H*p.dataset.oy}px)`;
+  p.style.zIndex=5;p.animate([{transform:'none'},{transform:t,offset:.29},{transform:t}],{duration:6500,easing:'cubic-bezier(.2,.7,.2,1)'})})}
+
+/* ---------- circuit ---------- */
+function circuit(sol){
+ const POS=S.pos,TERM=POS?'or':'and',FIN=POS?'and':'or',gw=52,m=sol.length,INV=54;
+ const used=[...new Set(sol.flatMap(g=>g.lits.map(l=>l.i)))].sort((a,b)=>a-b);
+ const hasN=i=>sol.some(g=>g.lits.some(l=>l.i==i&&l.neg));
+ /* one vertical line per variable, plus one for its complement when an inverter is needed */
+ const xT={},xN={};let cur=46;
+ used.forEach(i=>{xT[i]=cur;if(hasN(i)){xN[i]=cur+62;cur+=62+46}else cur+=46});
+ const colX=l=>l.neg?xN[l.i]:xT[l.i];
+ const cT={},cN={};used.forEach(i=>{cT[i]=[];cN[i]=[];if(hasN(i)){cT[i].push(INV);cN[i].push(INV)}});
+ const conn=(l,y)=>(l.neg?cN:cT)[l.i].push(y);
+ const wire=d=>`<path d="${d}" fill="none"/>`;
+ const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="3.6" fill="currentColor" stroke="none"/>`;
+ const label=(x,y,t,sz,a)=>`<text x="${x}" y="${y}" text-anchor="${a||'start'}" font-size="${sz}" font-weight="700" fill="currentColor" stroke="var(--card)" stroke-width="4" paint-order="stroke" stroke-linejoin="round" style="font-family:var(--f)">${t}</text>`;
+ const gate=(t,x,y0,h)=>t=='and'
+  ?`<path d="M${x},${y0} H${x+gw/2} A${gw/2},${h/2} 0 0 1 ${x+gw/2},${y0+h} H${x} Z" fill="var(--card)"/>`
+  :`<path d="M${x},${y0} Q${x+gw*.65},${y0} ${x+gw},${y0+h/2} Q${x+gw*.65},${y0+h} ${x},${y0+h} Q${x+gw*.28},${y0+h/2} ${x},${y0} Z" fill="var(--card)"/>`;
+ const inX=(t,x,f)=>x+(t=='or'?.56*gw*f*(1-f):0);   /* where a wire meets the gate's input side */
+ const gx=cur+8,outX=gx+gw;
+ const lw=Math.max(...sol.map(g=>g.str.length))*9+8;  /* room for the term labels */
+ let y=98,el='',dots='';const outs=[];
+ sol.forEach(g=>{
+  const k=g.lits.length,h=Math.max(48,20*(k+1)),rowH=k>1?h+34:54,ym=y+rowH/2;
+  if(k==1){const l=g.lits[0];el+=wire(`M${colX(l)},${ym} H${outX}`);dots+=dot(colX(l),ym);conn(l,ym)}
+  else{const y0=ym-h/2;el+=gate(TERM,gx,y0,h);
+   g.lits.forEach((l,j)=>{const f=(j+1)/(k+1),yi=y0+h*f;el+=wire(`M${colX(l)},${yi} H${inX(TERM,gx,f)}`);dots+=dot(colX(l),yi);conn(l,yi)})}
+  el+=label(outX+8,ym-7,g.str,13);
+  outs.push(ym);y+=rowH});
+ const bottom=y,xb=outX+lw+12;let endX,fy;
+ if(m==1){endX=xb+34;fy=outs[0];el+=wire(`M${outX},${fy} H${endX}`)}
+ else{
+  const fh=Math.max(48,20*(m+1)),mid=(outs[0]+outs[m-1])/2,fy0=mid-fh/2;fy=mid;
+  const ins=outs.map((o,j)=>fy0+fh*(j+1)/(m+1));
+  const down=[],up=[];outs.forEach((o,j)=>{if(ins[j]>o+.5)down.push(j);else if(ins[j]<o-.5)up.push(j)});
+  const xm={};   /* every bend gets its own x so no two wires run on top of each other */
+  down.forEach((j,p)=>xm[j]=xb+10*(down.length-1-p));
+  [...up].reverse().forEach((j,p)=>xm[j]=xb+10*(down.length+up.length-1-p));
+  const fx=xb+10*(down.length+up.length)+22;
+  outs.forEach((o,j)=>{const xi=inX(FIN,fx,(j+1)/(m+1));
+   el+=xm[j]===undefined?wire(`M${outX},${o} H${xi}`):wire(`M${outX},${o} H${xm[j]} V${ins[j]} H${xi}`)});
+  el+=gate(FIN,fx,fy0,fh);endX=fx+gw+40;el+=wire(`M${fx+gw},${fy} H${endX}`)}
+ el+=label(endX+10,fy+6,'F',20);
+ let bus='';
+ used.forEach(i=>{
+  bus+=label(xT[i],20,S.vars[i],17,'middle')+wire(`M${xT[i]},28 V${Math.max(...cT[i])}`);
+  if(hasN(i)){const x=xT[i];
+   bus+=dot(x,INV)+wire(`M${x},${INV} H${x+10}`)
+    +`<path d="M${x+10},${INV-9} V${INV+9} L${x+28},${INV} Z" fill="var(--card)"/>`
+    +`<circle cx="${x+31.5}" cy="${INV}" r="3.5" fill="var(--card)"/>`
+    +wire(`M${x+35},${INV} H${xN[i]} V${Math.max(...cN[i])}`)
+    +label(xN[i],INV-10,S.vars[i]+'′',14,'middle')}});
+ const w=endX+52,hh=bottom+14;
+ return`<svg viewBox="0 0 ${w} ${hh}" style="color:var(--ink);min-width:${Math.round(w*.72)}px" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Logic circuit for the answer">${bus}${el}${dots}</svg>`}
+
+/* ---------- controls ---------- */
+let lastEx='';
+$('#dc').onclick=()=>{S.dcOn=!S.dcOn;S.shown=false;buildQ()};
+$('#rnd').onclick=()=>{document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+ const N=1<<S.n,lo=Math.max(1,Math.round(N*.25)),hi=Math.min(N-1,Math.max(lo,Math.round(N*.625)));
+ let pos,ord,dd,key,tries=0;
+ do{pos=Math.random()<.5;const k=Math.min(lo+Math.floor(Math.random()*(hi-lo+1)),N-2);
+  const all=[...Array(N).keys()].sort(()=>Math.random()-.5);
+  ord=all.slice(0,k).sort((a,b)=>a-b);
+  dd=S.dcOn?all.slice(k,k+1+Math.floor(Math.random()*Math.max(1,Math.round(N*.2)))).slice(0,N-k-1).sort((a,b)=>a-b):[];
+  key=S.n+(pos?'P':'S')+ord.join()+'|'+dd.join()}while(key==lastEx&&++tries<20);
+ lastEx=key;S.pos=pos;S.order=ord;S.dorder=dd;syncTerms();S.shown=false;S.idx=0;refresh()};
+$('#go').onclick=()=>{document.activeElement&&document.activeElement.blur&&document.activeElement.blur();S.shown=!S.shown;S.idx=0;refresh();if(S.shown)$(matchMedia('(min-width:900px)').matches?'#cir':'#ans').scrollIntoView({behavior:'smooth',block:'nearest'})};
+const setN=n=>{const vs=S.vars.slice(0,n);for(const c of 'ABCDEFGH'){if(vs.length>=n)break;if(!vs.includes(c))vs.push(c)}
+ S.vars=vs;S.n=n;S.slots=[...vs,...Array(4-vs.length).fill('')];S.shown=false;syncTerms();buildQ()};
+$('#seg').innerHTML='<span>Variables</span>'+[2,3,4].map(n=>`<button data-n="${n}">${n}</button>`).join('');
+$('#seg').onclick=e=>{const n=+e.target.dataset.n;if(n)setN(n)};
+const th=$('#theme'),root=document.documentElement;
+const setTheme=t=>{root.dataset.theme=t;th.textContent=t=='dark'?'☀️':'🌙';try{localStorage.setItem('kmtheme2',t)}catch(e){}};
+let saved=null;try{saved=localStorage.getItem('kmtheme2')}catch(e){}
+setTheme(saved||'light');
+th.onclick=()=>setTheme(root.dataset.theme=='dark'?'light':'dark');
+buildQ();
+</script></body></html>
