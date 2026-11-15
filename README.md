@@ -37,8 +37,6 @@ The project supports both **SOP (Sum of Products)** and **POS (Product of Sums)*
 - Supports **4-variable K-Maps**
 - Custom variable names
 
----
-
 ### 🧮 Boolean Expression Simplification
 
 - Automatic Boolean expression minimization
@@ -46,8 +44,6 @@ The project supports both **SOP (Sum of Products)** and **POS (Product of Sums)*
 - **POS (Π / Product of Sums)** support
 - Finds optimized groupings automatically
 - Prioritizes simplified expressions with fewer groups and literals
-
----
 
 ### 🗺️ Interactive Karnaugh Map
 
@@ -57,8 +53,6 @@ The project supports both **SOP (Sum of Products)** and **POS (Product of Sums)*
 - Supports multiple valid optimal grouping solutions
 - Clearly displays minterm/maxterm positions
 
----
-
 ### 🔄 Wrap-Around Grouping
 
 Karnaugh Maps allow cells on opposite edges to be grouped together.
@@ -67,11 +61,9 @@ This project includes:
 
 - Wrap-around grouping detection
 - Visual group highlighting
-- **Fold animation** to help visualize edge-to-edge grouping
+- Fold animation to help visualize edge-to-edge grouping
 
 Because apparently K-Maps weren't confusing enough already 😭
-
----
 
 ### ❌ Don't Care Terms
 
@@ -83,8 +75,6 @@ Features include:
 - Automatically uses Don't Care cells when beneficial
 - Uses them to create larger groups when possible
 - Shows which Don't Care terms were used in the solution
-
----
 
 ### 🔌 Logic Circuit Generation
 
@@ -99,8 +89,6 @@ Supported components include:
 
 The generated circuit automatically adapts depending on whether the expression is in **SOP or POS form**.
 
----
-
 ### 📊 Truth Table
 
 A complete truth table is generated automatically.
@@ -112,11 +100,7 @@ It includes:
 - Output values
 - Don't Care states represented as `X`
 
----
-
 ### 🎲 Random Examples
-
-Need something to practice with?
 
 Click the **Random Example** button to generate a new Boolean function instantly.
 
@@ -126,22 +110,18 @@ Useful for:
 - Testing the solver
 - Learning different grouping possibilities
 
----
-
 ### 🌙 Light & Dark Mode
 
-The website supports both:
+The website supports:
 
 - ☀️ Light Mode
 - 🌙 Dark Mode
 
 Your selected theme is stored locally in the browser.
 
----
-
 ### 📱 Responsive Design
 
-The application is designed to work across different screen sizes.
+The application is designed to work across different screen sizes:
 
 - 💻 Desktop
 - 📱 Mobile
@@ -161,15 +141,13 @@ The interface includes touch-friendly controls and responsive layouts.
 
 </p>
 
-### Technologies Used
-
 | Technology | Purpose |
 |---|---|
 | 🟠 **HTML5** | Application structure |
 | 🔵 **CSS3** | Styling, responsiveness, animations, and themes |
 | 🟡 **JavaScript** | K-Map generation, Boolean minimization, logic processing, and UI interactions |
 
-No frameworks. No backend. Just **HTML, CSS, and JavaScript** doing the heavy lifting. 💪
+> No frameworks. No backend. Just **HTML, CSS, and JavaScript** doing the heavy lifting. 💪
 
 ---
 
@@ -177,37 +155,13 @@ No frameworks. No backend. Just **HTML, CSS, and JavaScript** doing the heavy li
 
 No installation or dependencies are required.
 
-### Option 1 — Open Directly
-
-Download the project and open:
+You can simply open:
 
 ```text
 index.html
 ```
 
-using any modern web browser.
-
----
-
-### Option 2 — Clone the Repository
-
-```bash
-git clone https://github.com/YOUR_USERNAME/kmap-solver.git
-```
-
-Move into the project directory:
-
-```bash
-cd kmap-solver
-```
-
-Then open:
-
-```text
-index.html
-```
-
-That's it. 🎉
+in any modern web browser.
 
 ---
 
@@ -221,19 +175,15 @@ Choose between:
 - 3 Variables
 - 4 Variables
 
----
-
 ### 2️⃣ Enter Variable Names
 
-You can customize the variable names used in the Boolean function.
+Customize the variables used in the Boolean function.
 
-For example:
+Example:
 
 ```text
 F(A, B, C, D)
 ```
-
----
 
 ### 3️⃣ Choose SOP or POS
 
@@ -243,20 +193,18 @@ Switch between:
 Σ → SOP (Sum of Products)
 ```
 
-and
+and:
 
 ```text
 Π → POS (Product of Sums)
 ```
 
----
-
 ### 4️⃣ Enter the Terms
 
-Enter the required:
+Enter:
 
-- Minterms for **SOP**
-- Maxterms for **POS**
+- **Minterms** for SOP
+- **Maxterms** for POS
 
 Example:
 
@@ -264,23 +212,15 @@ Example:
 F(A, B, C, D) = Σ(5, 7, 13, 15)
 ```
 
----
-
 ### 5️⃣ Add Don't Care Terms (Optional)
 
 Enable the **Don't Care** option and enter the required terms.
 
-The solver will automatically determine whether they can be used to create better groupings.
-
----
+The solver automatically determines whether they can be used to create better groupings.
 
 ### 6️⃣ Show the Answer
 
-Click:
-
-```text
-Show Answer
-```
+Click **Show Answer**.
 
 The application will generate:
 
@@ -295,20 +235,13 @@ The application will generate:
 ## 📂 Project Structure
 
 ```text
-kmap-solver/
+K-map/
 │
 ├── index.html
 └── README.md
 ```
 
-The entire application is currently contained in a **single HTML file**.
-
-This makes it:
-
-- Easy to run
-- Easy to share
-- Easy to deploy
-- Easy to understand
+The entire application is contained in a **single HTML file**, making it easy to run, share, and deploy.
 
 ---
 
@@ -326,13 +259,13 @@ The solver follows these general steps:
 8. Creates the corresponding logic circuit
 9. Generates the truth table
 
-The solver can also detect **multiple equally optimal grouping solutions** and allows the user to switch between them.
+The solver can also detect **multiple equally optimal grouping solutions** and allows users to switch between them.
 
 ---
 
 ## 🌐 Deployment
 
-Since this is a static website, it can be deployed easily using services such as:
+Since this is a static website, it can be deployed easily using:
 
 - GitHub Pages
 - Netlify
@@ -343,8 +276,6 @@ Since this is a static website, it can be deployed easily using services such as
 
 ## 🔮 Future Improvements
 
-Some possible future additions:
-
 - [ ] Step-by-step K-Map solving explanation
 - [ ] Manual grouping mode
 - [ ] Grouping validation for students
@@ -354,7 +285,6 @@ Some possible future additions:
 - [ ] Shareable solutions
 - [ ] Export results as PDF
 - [ ] More detailed simplification explanations
-- [ ] Additional educational examples
 
 ---
 
@@ -368,9 +298,7 @@ Karnaugh Maps can be confusing, especially when dealing with:
 - SOP and POS forms
 - Logic circuit implementation
 
-This project was created to make the process more **visual, interactive, and easier to understand**.
-
-Rather than simply giving the answer, the application helps users see the relationship between:
+This project aims to make the process more **visual, interactive, and easier to understand**.
 
 ```text
 Boolean Function
@@ -392,15 +320,15 @@ Simplified Expression
 
 Created as an interactive educational project for learning and visualizing **Karnaugh Map simplification and Boolean logic**.
 
+### 🔗 Repository
+
+[github.com/shibil62/K-map](https://github.com/shibil62/K-map/blob/main/README.md)
+
 ---
 
 ## ⭐ Support
 
 If you found this project useful or interesting, consider giving the repository a **star** ⭐.
-
-It helps the project reach more students and developers.
-
----
 
 <p align="center">
   Made with ❤️ and a questionable amount of Boolean algebra.
